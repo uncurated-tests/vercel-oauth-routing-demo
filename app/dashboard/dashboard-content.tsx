@@ -48,6 +48,10 @@ export function DashboardContent() {
         return res.json()
       })
       .then((data) => {
+        if (data?.error) {
+          setError(data.error)
+          return
+        }
         if (data?.teams) {
           setTeams(data.teams)
           // Auto-select first team, or use URL param
@@ -59,7 +63,7 @@ export function DashboardContent() {
           }
         }
       })
-      .catch(() => setError('Failed to load teams'))
+      .catch((err) => setError(err.message || 'Failed to load teams'))
       .finally(() => setLoadingTeams(false))
   }, [searchParams])
 

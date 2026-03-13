@@ -29,7 +29,10 @@ export async function listTeams(
   })
 
   if (!res.ok) {
-    throw new Error(`Failed to list teams: ${res.status}`)
+    const error = await res.json().catch(() => ({}))
+    throw new Error(
+      `Failed to list teams: ${res.status} ${JSON.stringify(error)}`,
+    )
   }
 
   const data = await res.json()
@@ -50,7 +53,10 @@ export async function listProjects(
   })
 
   if (!res.ok) {
-    throw new Error(`Failed to list projects: ${res.status}`)
+    const error = await res.json().catch(() => ({}))
+    throw new Error(
+      `Failed to list projects: ${res.status} ${JSON.stringify(error)}`,
+    )
   }
 
   const data = await res.json()

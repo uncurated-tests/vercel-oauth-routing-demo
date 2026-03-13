@@ -13,10 +13,9 @@ export async function GET() {
     const teams = await listTeams(accessToken)
     return Response.json({ teams })
   } catch (error) {
-    console.error('Failed to list teams:', error)
-    return Response.json(
-      { error: 'Failed to list teams' },
-      { status: 500 },
-    )
+    const message =
+      error instanceof Error ? error.message : 'Failed to list teams'
+    console.error('Failed to list teams:', message)
+    return Response.json({ error: message }, { status: 500 })
   }
 }
