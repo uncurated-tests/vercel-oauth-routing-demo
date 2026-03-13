@@ -1,5 +1,11 @@
 const VERCEL_API = 'https://api.vercel.com'
 
+export interface VercelTeam {
+  id: string
+  slug: string
+  name: string | null
+}
+
 export interface VercelProject {
   id: string
   name: string
@@ -15,10 +21,31 @@ export interface RoutingRule {
   actions: Array<{ type: string; dest?: string }>
 }
 
+export async function listTeams(
+  accessToken: string,
+): Promise<VercelTeam[]> {
+  const res = await fetch(`${VERCEL_API}/v2/teams?limit=50`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  })
+
+  if (!res.ok) {
+    throw new Error(`Failed to list teams: ${res.status}`)
+  }
+
+  const data = await res.json()
+  return data.teams
+}
+
 export async function listProjects(
   accessToken: string,
+  teamId?: string,
 ): Promise<VercelProject[]> {
-  const res = await fetch(`${VERCEL_API}/v9/projects?limit=50`, {
+  const params = new URLSearchParams({ limit: '50' })
+  if (teamId) {
+    params.set('teamId', teamId)
+  }
+
+  const res = await fetch(`${VERCEL_API}/v9/projects?${params.toString()}`, {
     headers: { Authorization: `Bearer ${accessToken}` },
   })
 
@@ -33,6 +60,7 @@ export async function listProjects(
 export async function createRoutingRule(
   accessToken: string,
   projectId: string,
+  teamId: string | undefined,
   rule: {
     name: string
     path: string
@@ -40,8 +68,9 @@ export async function createRoutingRule(
     actions: Array<{ type: string; dest: string }>
   },
 ): Promise<RoutingRule> {
+  const params = teamId ? `?teamId=${teamId}` : ''
   const res = await fetch(
-    `${VERCEL_API}/v1/projects/${projectId}/routing-rules`,
+    `${VERCEL_API}/v1/projects/${projectId}/routing-rules${params}`,
     {
       method: 'POST',
       headers: {
@@ -65,9 +94,11 @@ export async function createRoutingRule(
 export async function publishRoutingRules(
   accessToken: string,
   projectId: string,
+  teamId?: string,
 ): Promise<void> {
+  const params = teamId ? `?teamId=${teamId}` : ''
   const res = await fetch(
-    `${VERCEL_API}/v1/projects/${projectId}/routing-rules/publish`,
+    `${VERCEL_API}/v1/projects/${projectId}/routing-rules/publish${params}`,
     {
       method: 'POST',
       headers: {

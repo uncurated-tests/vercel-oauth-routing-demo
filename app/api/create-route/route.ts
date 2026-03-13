@@ -11,7 +11,7 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json()
-    const { projectId, name, path, syntax, actions } = body
+    const { projectId, teamId, name, path, syntax, actions } = body
 
     if (!projectId || !name || !path || !actions) {
       return Response.json(
@@ -20,7 +20,7 @@ export async function POST(request: Request) {
       )
     }
 
-    const rule = await createRoutingRule(accessToken, projectId, {
+    const rule = await createRoutingRule(accessToken, projectId, teamId, {
       name,
       path,
       syntax: syntax || 'path-to-regexp',

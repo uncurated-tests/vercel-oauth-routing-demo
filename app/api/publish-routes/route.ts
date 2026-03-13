@@ -11,7 +11,7 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json()
-    const { projectId } = body
+    const { projectId, teamId } = body
 
     if (!projectId) {
       return Response.json(
@@ -20,7 +20,7 @@ export async function POST(request: Request) {
       )
     }
 
-    await publishRoutingRules(accessToken, projectId)
+    await publishRoutingRules(accessToken, projectId, teamId)
     return Response.json({ success: true })
   } catch (error) {
     console.error('Failed to publish routing rules:', error)
