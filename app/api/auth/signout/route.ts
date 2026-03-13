@@ -33,7 +33,6 @@ export async function POST() {
   }
 
   cookieStore.set('access_token', '', { maxAge: 0 })
-  cookieStore.set('refresh_token', '', { maxAge: 0 })
 
   return Response.json({}, { status: 200 })
 }

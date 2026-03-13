@@ -7,7 +7,6 @@ interface TokenData {
   id_token: string
   expires_in: number
   scope: string
-  refresh_token: string
 }
 
 export async function GET(request: NextRequest) {
@@ -107,12 +106,5 @@ async function setAuthCookies(tokenData: TokenData) {
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
     maxAge: tokenData.expires_in,
-  })
-
-  cookieStore.set('refresh_token', tokenData.refresh_token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    maxAge: 60 * 60 * 24 * 30,
   })
 }
