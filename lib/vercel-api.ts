@@ -13,14 +13,6 @@ export interface VercelProject {
   updatedAt: number
 }
 
-export interface RoutingRule {
-  id: string
-  name: string
-  path: string
-  syntax: string
-  actions: Array<{ type: string; dest?: string }>
-}
-
 export async function listTeams(
   accessToken: string,
 ): Promise<VercelTeam[]> {
@@ -69,26 +61,35 @@ export async function createRoutingRule(
   teamId: string | undefined,
   rule: {
     name: string
-    path: string
-    syntax: string
-    actions: Array<{ type: string; dest: string }>
+    src: string
+    srcSyntax: string
+    dest: string
   },
-): Promise<RoutingRule> {
+) {
   const params = teamId ? `?teamId=${teamId}` : ''
   const res = await fetch(
-    `${VERCEL_API}/v1/projects/${projectId}/routing-rules${params}`,
+    `${VERCEL_API}/v1/projects/${projectId}/routes${params}`,
     {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(rule),
+      body: JSON.stringify({
+        route: {
+          name: rule.name,
+          srcSyntax: rule.srcSyntax,
+          route: {
+            src: rule.src,
+            dest: rule.dest,
+          },
+        },
+      }),
     },
   )
 
   if (!res.ok) {
-    const error = await res.json()
+    const error = await res.json().catch(() => ({}))
     throw new Error(
       `Failed to create routing rule: ${JSON.stringify(error)}`,
     )
@@ -104,7 +105,7 @@ export async function publishRoutingRules(
 ): Promise<void> {
   const params = teamId ? `?teamId=${teamId}` : ''
   const res = await fetch(
-    `${VERCEL_API}/v1/projects/${projectId}/routing-rules/publish${params}`,
+    `${VERCEL_API}/v1/projects/${projectId}/routes/publish${params}`,
     {
       method: 'POST',
       headers: {
@@ -114,7 +115,7 @@ export async function publishRoutingRules(
   )
 
   if (!res.ok) {
-    const error = await res.json()
+    const error = await res.json().catch(() => ({}))
     throw new Error(
       `Failed to publish routing rules: ${JSON.stringify(error)}`,
     )

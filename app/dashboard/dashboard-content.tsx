@@ -120,9 +120,9 @@ export function DashboardContent() {
           projectId: selectedProjectId,
           teamId: selectedTeamId || undefined,
           name,
-          path: sourcePath,
-          syntax: 'path-to-regexp',
-          actions: [{ type: 'rewrite', dest: destination }],
+          src: sourcePath,
+          srcSyntax: 'path-to-regexp',
+          dest: destination,
         }),
       })
 

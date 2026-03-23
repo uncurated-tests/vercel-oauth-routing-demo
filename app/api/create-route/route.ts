@@ -11,23 +11,23 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json()
-    const { projectId, teamId, name, path, syntax, actions } = body
+    const { projectId, teamId, name, src, srcSyntax, dest } = body
 
-    if (!projectId || !name || !path || !actions) {
+    if (!projectId || !name || !src || !dest) {
       return Response.json(
         { error: 'Missing required fields' },
         { status: 400 },
       )
     }
 
-    const rule = await createRoutingRule(accessToken, projectId, teamId, {
+    const result = await createRoutingRule(accessToken, projectId, teamId, {
       name,
-      path,
-      syntax: syntax || 'path-to-regexp',
-      actions,
+      src,
+      srcSyntax: srcSyntax || 'path-to-regexp',
+      dest,
     })
 
-    return Response.json(rule)
+    return Response.json(result)
   } catch (error) {
     console.error('Failed to create routing rule:', error)
     return Response.json(
