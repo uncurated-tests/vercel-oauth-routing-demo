@@ -16,10 +16,9 @@ export async function GET(request: NextRequest) {
     const projects = await listProjects(accessToken, teamId)
     return Response.json({ projects })
   } catch (error) {
-    console.error('Failed to list projects:', error)
-    return Response.json(
-      { error: 'Failed to list projects' },
-      { status: 500 },
-    )
+    const message =
+      error instanceof Error ? error.message : 'Failed to list projects'
+    console.error('Failed to list projects:', message)
+    return Response.json({ error: message }, { status: 500 })
   }
 }

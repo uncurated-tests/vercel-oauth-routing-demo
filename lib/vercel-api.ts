@@ -1,58 +1,28 @@
-const VERCEL_API = 'https://api.vercel.com'
+import { Vercel } from '@vercel/sdk'
 
-export interface VercelTeam {
-  id: string
-  slug: string
-  name: string | null
+export function createClient(accessToken: string) {
+  return new Vercel({ bearerToken: accessToken })
 }
 
-export interface VercelProject {
-  id: string
-  name: string
-  framework: string | null
-  updatedAt: number
-}
-
-export async function listTeams(
-  accessToken: string,
-): Promise<VercelTeam[]> {
-  const res = await fetch(`${VERCEL_API}/v2/teams?limit=50`, {
-    headers: { Authorization: `Bearer ${accessToken}` },
-  })
-
-  if (!res.ok) {
-    const error = await res.json().catch(() => ({}))
-    throw new Error(
-      `Failed to list teams: ${res.status} ${JSON.stringify(error)}`,
-    )
-  }
-
-  const data = await res.json()
-  return data.teams
+export async function listTeams(accessToken: string) {
+  const vercel = createClient(accessToken)
+  const result = await vercel.teams.getTeams({ limit: 50 })
+  return result.teams
 }
 
 export async function listProjects(
   accessToken: string,
   teamId?: string,
-): Promise<VercelProject[]> {
-  const params = new URLSearchParams({ limit: '50' })
-  if (teamId) {
-    params.set('teamId', teamId)
-  }
-
-  const res = await fetch(`${VERCEL_API}/v9/projects?${params.toString()}`, {
-    headers: { Authorization: `Bearer ${accessToken}` },
+) {
+  const vercel = createClient(accessToken)
+  const result = await vercel.projects.getProjects({
+    limit: '50',
+    teamId,
   })
-
-  if (!res.ok) {
-    const error = await res.json().catch(() => ({}))
-    throw new Error(
-      `Failed to list projects: ${res.status} ${JSON.stringify(error)}`,
-    )
+  if ('projects' in result) {
+    return result.projects
   }
-
-  const data = await res.json()
-  return data.projects
+  return result
 }
 
 export async function createRoutingRule(
@@ -66,60 +36,47 @@ export async function createRoutingRule(
     dest: string
   },
 ) {
-  const params = teamId ? `?teamId=${teamId}` : ''
-  const res = await fetch(
-    `${VERCEL_API}/v1/projects/${projectId}/routes${params}`,
-    {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
+  const vercel = createClient(accessToken)
+  return await vercel.projectRoutes.addRoute({
+    projectId,
+    teamId,
+    requestBody: {
+      route: {
+        name: rule.name,
+        srcSyntax: rule.srcSyntax as 'path-to-regexp' | 'equals' | 'regex',
         route: {
-          name: rule.name,
-          srcSyntax: rule.srcSyntax,
-          route: {
-            src: rule.src,
-            dest: rule.dest,
-          },
+          src: rule.src,
+          dest: rule.dest,
         },
-      }),
+      },
     },
-  )
-
-  if (!res.ok) {
-    const error = await res.json().catch(() => ({}))
-    throw new Error(
-      `Failed to create routing rule: ${JSON.stringify(error)}`,
-    )
-  }
-
-  return await res.json()
+  })
 }
 
 export async function publishRoutingRules(
   accessToken: string,
   projectId: string,
   teamId?: string,
-): Promise<void> {
-  const params = teamId ? `?teamId=${teamId}` : ''
-  const res = await fetch(
-    `${VERCEL_API}/v1/projects/${projectId}/routes/publish${params}`,
-    {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({}),
-    },
-  )
+) {
+  const vercel = createClient(accessToken)
 
-  if (!res.ok) {
-    const error = await res.json().catch(() => ({}))
-    throw new Error(
-      `Failed to publish routing rules: ${JSON.stringify(error)}`,
-    )
+  // Get the staging version ID first
+  const versions = await vercel.projectRoutes.getRouteVersions({
+    projectId,
+    teamId,
+  })
+
+  const stagingVersion = versions.versions?.find((v) => v.isStaging)
+  if (!stagingVersion) {
+    throw new Error('No staging version found to publish')
   }
+
+  return await vercel.projectRoutes.updateRouteVersions({
+    projectId,
+    teamId,
+    requestBody: {
+      id: stagingVersion.id,
+      action: 'promote',
+    },
+  })
 }

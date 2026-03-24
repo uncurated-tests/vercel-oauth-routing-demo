@@ -23,15 +23,11 @@ export async function POST(request: Request) {
     await publishRoutingRules(accessToken, projectId, teamId)
     return Response.json({ success: true })
   } catch (error) {
-    console.error('Failed to publish routing rules:', error)
-    return Response.json(
-      {
-        error:
-          error instanceof Error
-            ? error.message
-            : 'Failed to publish routing rules',
-      },
-      { status: 500 },
-    )
+    const message =
+      error instanceof Error
+        ? error.message
+        : 'Failed to publish routing rules'
+    console.error('Failed to publish routing rules:', message)
+    return Response.json({ error: message }, { status: 500 })
   }
 }

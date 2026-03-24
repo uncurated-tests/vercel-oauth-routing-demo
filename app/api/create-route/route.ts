@@ -29,15 +29,9 @@ export async function POST(request: Request) {
 
     return Response.json(result)
   } catch (error) {
-    console.error('Failed to create routing rule:', error)
-    return Response.json(
-      {
-        error:
-          error instanceof Error
-            ? error.message
-            : 'Failed to create routing rule',
-      },
-      { status: 500 },
-    )
+    const message =
+      error instanceof Error ? error.message : 'Failed to create routing rule'
+    console.error('Failed to create routing rule:', message)
+    return Response.json({ error: message }, { status: 500 })
   }
 }
