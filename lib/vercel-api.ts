@@ -1,28 +1,43 @@
 import { Vercel } from '@vercel/sdk'
 
-export function createClient(accessToken: string) {
+const VERCEL_API = 'https://api.vercel.com'
+
+function createClient(accessToken: string) {
   return new Vercel({ bearerToken: accessToken })
 }
 
 export async function listTeams(accessToken: string) {
-  const vercel = createClient(accessToken)
-  const result = await vercel.teams.getTeams({ limit: 50 })
-  return result.teams
+  const res = await fetch(`${VERCEL_API}/v2/teams?limit=50`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  })
+
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({}))
+    throw new Error(`Failed to list teams: ${res.status} ${JSON.stringify(error)}`)
+  }
+
+  const data = await res.json()
+  return data.teams
 }
 
 export async function listProjects(
   accessToken: string,
   teamId?: string,
 ) {
-  const vercel = createClient(accessToken)
-  const result = await vercel.projects.getProjects({
-    limit: '50',
-    teamId,
+  const params = new URLSearchParams({ limit: '50' })
+  if (teamId) params.set('teamId', teamId)
+
+  const res = await fetch(`${VERCEL_API}/v9/projects?${params.toString()}`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
   })
-  if ('projects' in result) {
-    return result.projects
+
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({}))
+    throw new Error(`Failed to list projects: ${res.status} ${JSON.stringify(error)}`)
   }
-  return result
+
+  const data = await res.json()
+  return data.projects
 }
 
 export async function createRoutingRule(
