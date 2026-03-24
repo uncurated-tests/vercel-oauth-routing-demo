@@ -110,7 +110,9 @@ export async function publishRoutingRules(
       method: 'POST',
       headers: {
         Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
       },
+      body: JSON.stringify({}),
     },
   )
 
