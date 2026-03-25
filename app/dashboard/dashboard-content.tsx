@@ -2,6 +2,10 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
+import { TeamSelector } from './team-selector'
+import { ProjectSelector } from './project-selector'
+import { SelectedDisplay } from './selected-display'
+import { RouteForm } from './route-form'
 
 interface Team {
   id: string
@@ -12,21 +16,28 @@ interface Team {
 interface Project {
   id: string
   name: string
-  framework: string | null
-  updatedAt: number
 }
 
+type Step = 'select-team' | 'select-project' | 'form'
 type Status = 'idle' | 'creating' | 'publishing' | 'success' | 'error'
 
 export function DashboardContent() {
   const searchParams = useSearchParams()
 
+  // Step state
+  const [step, setStep] = useState<Step>('select-team')
+
+  // Data
   const [teams, setTeams] = useState<Team[]>([])
-  const [selectedTeamId, setSelectedTeamId] = useState<string>('')
   const [projects, setProjects] = useState<Project[]>([])
   const [loadingTeams, setLoadingTeams] = useState(true)
   const [loadingProjects, setLoadingProjects] = useState(false)
-  const [selectedProjectId, setSelectedProjectId] = useState('')
+
+  // Selection
+  const [selectedTeam, setSelectedTeam] = useState<Team | null>(null)
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null)
+
+  // Form
   const [name, setName] = useState(searchParams.get('name') || 'Docs Proxy')
   const [sourcePath, setSourcePath] = useState(
     searchParams.get('src') || '/docs/:path*',
@@ -54,27 +65,18 @@ export function DashboardContent() {
         }
         if (data?.teams) {
           setTeams(data.teams)
-          // Auto-select first team, or use URL param
-          const prefillTeam = searchParams.get('teamId')
-          if (prefillTeam && data.teams.find((t: Team) => t.id === prefillTeam)) {
-            setSelectedTeamId(prefillTeam)
-          } else if (data.teams.length > 0) {
-            setSelectedTeamId(data.teams[0].id)
-          }
         }
       })
       .catch((err) => setError(err.message || 'Failed to load teams'))
       .finally(() => setLoadingTeams(false))
-  }, [searchParams])
+  }, [])
 
-  // Load projects when team changes
+  // Load projects when a team is selected
   const loadProjects = useCallback((teamId: string) => {
     setLoadingProjects(true)
     setProjects([])
-    setSelectedProjectId('')
 
-    const params = teamId ? `?teamId=${teamId}` : ''
-    fetch(`/api/projects${params}`)
+    fetch(`/api/projects?teamId=${teamId}`)
       .then((res) => {
         if (res.status === 401) {
           window.location.href = '/'
@@ -85,30 +87,36 @@ export function DashboardContent() {
       .then((data) => {
         if (data?.projects) {
           setProjects(data.projects)
-          // Auto-select prefilled project or first project
-          const prefillProject = searchParams.get('projectId')
-          if (
-            prefillProject &&
-            data.projects.find((p: Project) => p.id === prefillProject)
-          ) {
-            setSelectedProjectId(prefillProject)
-          } else if (data.projects.length > 0) {
-            setSelectedProjectId(data.projects[0].id)
-          }
         }
       })
       .catch(() => setError('Failed to load projects'))
       .finally(() => setLoadingProjects(false))
-  }, [searchParams])
+  }, [])
 
-  useEffect(() => {
-    if (selectedTeamId) {
-      loadProjects(selectedTeamId)
-    }
-  }, [selectedTeamId, loadProjects])
+  function handleTeamSelect(team: Team) {
+    setSelectedTeam(team)
+    setSelectedProject(null)
+    setStep('select-project')
+    loadProjects(team.id)
+  }
+
+  function handleProjectSelect(project: Project) {
+    setSelectedProject(project)
+    setStep('form')
+  }
+
+  function handleChange() {
+    setSelectedTeam(null)
+    setSelectedProject(null)
+    setStep('select-team')
+    setError('')
+    setStatus('idle')
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    if (!selectedProject || !selectedTeam) return
+
     setStatus('creating')
     setError('')
 
@@ -117,8 +125,8 @@ export function DashboardContent() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          projectId: selectedProjectId,
-          teamId: selectedTeamId || undefined,
+          projectId: selectedProject.id,
+          teamId: selectedTeam.id,
           name,
           src: sourcePath,
           srcSyntax: 'path-to-regexp',
@@ -137,8 +145,8 @@ export function DashboardContent() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          projectId: selectedProjectId,
-          teamId: selectedTeamId || undefined,
+          projectId: selectedProject.id,
+          teamId: selectedTeam.id,
         }),
       })
 
@@ -159,9 +167,7 @@ export function DashboardContent() {
     window.location.href = '/'
   }
 
-  const selectedProject = projects.find((p) => p.id === selectedProjectId)
-  const selectedTeam = teams.find((t) => t.id === selectedTeamId)
-
+  // Loading state
   if (loadingTeams) {
     return (
       <main className="min-h-screen flex items-center justify-center">
@@ -170,10 +176,9 @@ export function DashboardContent() {
     )
   }
 
+  // Success state
   if (status === 'success') {
-    const dashboardBase = selectedTeam
-      ? `https://vercel.com/${selectedTeam.slug}`
-      : 'https://vercel.com'
+    const teamSlug = selectedTeam?.slug || selectedTeam?.name || ''
 
     return (
       <main className="min-h-screen flex items-center justify-center px-4">
@@ -229,7 +234,7 @@ export function DashboardContent() {
           </div>
           <div className="flex flex-col gap-3">
             <a
-              href={`${dashboardBase}/${selectedProject?.name}/cdn/routing`}
+              href={`https://vercel.com/${teamSlug}/${selectedProject?.name}/cdn/routing`}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center bg-gray-900 dark:bg-white text-white dark:text-gray-900 px-5 py-2.5 rounded-lg font-medium hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors text-sm"
@@ -239,6 +244,9 @@ export function DashboardContent() {
             <button
               onClick={() => {
                 setStatus('idle')
+                setStep('select-team')
+                setSelectedTeam(null)
+                setSelectedProject(null)
                 setName(searchParams.get('name') || 'Docs Proxy')
                 setSourcePath(searchParams.get('src') || '/docs/:path*')
                 setDestination(searchParams.get('dest') || '')
@@ -253,6 +261,7 @@ export function DashboardContent() {
     )
   }
 
+  // Main flow: step-based selection + form
   return (
     <main className="min-h-screen flex items-center justify-center px-4 py-16">
       <div className="max-w-lg w-full">
@@ -266,136 +275,49 @@ export function DashboardContent() {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label className="block text-sm font-medium mb-2">Team</label>
-            <select
-              value={selectedTeamId}
-              onChange={(e) => setSelectedTeamId(e.target.value)}
-              className="w-full rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 dark:focus:ring-white"
-            >
-              {teams.map((team) => (
-                <option key={team.id} value={team.id}>
-                  {team.name || team.slug}
-                </option>
-              ))}
-            </select>
-          </div>
+        {step === 'select-team' && (
+          <TeamSelector teams={teams} onSelect={handleTeamSelect} />
+        )}
 
-          <div>
-            <label className="block text-sm font-medium mb-2">Project</label>
-            {loadingProjects ? (
-              <p className="text-sm text-gray-500 dark:text-gray-400 py-2.5">
-                Loading projects...
-              </p>
-            ) : projects.length === 0 ? (
-              <p className="text-sm text-gray-500 dark:text-gray-400 py-2.5">
-                No projects found for this team.
-              </p>
-            ) : (
-              <select
-                value={selectedProjectId}
-                onChange={(e) => setSelectedProjectId(e.target.value)}
-                className="w-full rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 dark:focus:ring-white"
-              >
-                {projects.map((project) => (
-                  <option key={project.id} value={project.id}>
-                    {project.name}
-                  </option>
-                ))}
-              </select>
-            )}
-          </div>
+        {step === 'select-project' && selectedTeam && (
+          <ProjectSelector
+            projects={projects}
+            teamName={selectedTeam.name || selectedTeam.slug}
+            loading={loadingProjects}
+            onSelect={handleProjectSelect}
+            onBack={() => {
+              setSelectedTeam(null)
+              setStep('select-team')
+            }}
+          />
+        )}
 
-          <div>
-            <label className="block text-sm font-medium mb-2">Rule name</label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Docs Proxy"
-              required
-              className="w-full rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 dark:focus:ring-white"
+        {step === 'form' && selectedTeam && selectedProject && (
+          <>
+            <SelectedDisplay
+              teamName={selectedTeam.name || selectedTeam.slug}
+              projectName={selectedProject.name}
+              onChange={handleChange}
             />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-2">
-              Source path
-            </label>
-            <input
-              type="text"
-              value={sourcePath}
-              onChange={(e) => setSourcePath(e.target.value)}
-              placeholder="/docs/:path*"
-              required
-              className="w-full rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 px-3 py-2.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-gray-900 dark:focus:ring-white"
+            <RouteForm
+              name={name}
+              setName={setName}
+              sourcePath={sourcePath}
+              setSourcePath={setSourcePath}
+              destination={destination}
+              setDestination={setDestination}
+              status={status}
+              error={error}
+              onSubmit={handleSubmit}
             />
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5">
-              Uses{' '}
-              <a
-                href="https://vercel.com/docs/routing/project-routing-rules"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline underline-offset-2"
-              >
-                path-to-regexp
-              </a>{' '}
-              syntax
-            </p>
+          </>
+        )}
+
+        {error && step !== 'form' && (
+          <div className="mt-4 rounded-lg border border-red-200 dark:border-red-500/20 bg-red-50 dark:bg-red-500/5 px-4 py-3">
+            <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
           </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-2">
-              Destination URL
-            </label>
-            <input
-              type="text"
-              value={destination}
-              onChange={(e) => setDestination(e.target.value)}
-              placeholder="https://your-backend.example.com/docs/:path*"
-              required
-              className="w-full rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 px-3 py-2.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-gray-900 dark:focus:ring-white"
-            />
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5">
-              The external URL to rewrite requests to
-            </p>
-          </div>
-
-          {error && (
-            <div className="rounded-lg border border-red-200 dark:border-red-500/20 bg-red-50 dark:bg-red-500/5 px-4 py-3">
-              <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
-            </div>
-          )}
-
-          <button
-            type="submit"
-            disabled={
-              status === 'creating' ||
-              status === 'publishing' ||
-              !selectedProjectId
-            }
-            className="w-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 px-5 py-2.5 rounded-lg font-medium hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {status === 'creating'
-              ? 'Creating rule...'
-              : status === 'publishing'
-                ? 'Publishing...'
-                : 'Create and Publish Route'}
-          </button>
-        </form>
-
-        <div className="mt-8 rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 px-5 py-4">
-          <p className="text-xs text-gray-500 dark:text-gray-500 leading-relaxed">
-            This will create a rewrite rule on your Vercel project and publish
-            it to the CDN immediately. The rule can be edited or removed from
-            your project&apos;s{' '}
-            <strong className="text-gray-600 dark:text-gray-400">
-              CDN &rarr; Routing
-            </strong>{' '}
-            settings.
-          </p>
-        </div>
+        )}
       </div>
     </main>
   )
