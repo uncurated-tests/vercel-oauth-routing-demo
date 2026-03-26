@@ -1,32 +1,65 @@
 # Vercel OAuth Routing Demo
 
-A demo app showing how to use [Sign in with Vercel](https://vercel.com/docs/sign-in-with-vercel) to create [project-level routing rules](https://vercel.com/docs/routing/project-routing-rules) on behalf of a user.
+A demo app showing how to use [Sign in with Vercel](https://vercel.com/docs/sign-in-with-vercel) OAuth and the [Vercel SDK](https://vercel.com/docs/rest-api/sdk/project-routes/add-a-routing-rule) to create [project-level routing rules](https://vercel.com/docs/routing/project-routing-rules) on behalf of a user.
 
 ## How it works
 
 1. User clicks "Sign in with Vercel" and authenticates via OAuth (PKCE flow)
 2. The app receives an access token scoped to the user's account
-3. User selects a project and configures a rewrite rule (source path + destination URL)
-4. The app creates the routing rule via the [Vercel REST API](https://vercel.com/docs/rest-api/project-routes/add-a-routing-rule) and auto-publishes it
+3. User selects a team and project, then configures a rewrite rule (source path + destination URL)
+4. The app creates the routing rule via the [Vercel SDK](https://vercel.com/docs/rest-api/sdk/project-routes/add-a-routing-rule) and auto-publishes it to production
 
 ## Setup
 
 ### 1. Create an OAuth app
 
-Go to [vercel.com/account/apps](https://vercel.com/account/apps) and create a new app:
+Go to [vercel.com/account/apps](https://vercel.com/account/apps) and create a new app.
 
-- Set the **Authorization Callback URL** to `http://localhost:3000/api/auth/callback`
-- Note the **Client ID** and generate a **Client Secret**
+#### App settings
+
+- **Name**: Choose a name for your app
+- **Authorization Callback URL**: Set to your deployed URL + `/api/auth/callback` (e.g., `https://your-app.vercel.app/api/auth/callback`). For local development, also add `http://localhost:3000/api/auth/callback`.
+
+#### Grant types
+
+- **Authorization Code**: Enabled
+
+#### Client authentication methods
+
+- **client_secret_post**: Enabled
+
+#### Scopes
+
+- **openid**: Enabled
+
+#### Permissions
+
+The following permissions are required for the app to list teams/projects and create routing rules:
+
+| Permission | Why |
+|---|---|
+| **read:team** | List the user's teams |
+| **read:project** | List projects within a team |
+| **read-write:project** | Create and publish routing rules |
+
+After creating the app, generate a **Client Secret** from the Client Secrets section.
 
 ### 2. Configure environment variables
+
+For local development, copy the example env file and fill in the values:
 
 ```bash
 cp .env.local.example .env.local
 ```
 
-Fill in `NEXT_PUBLIC_VERCEL_APP_CLIENT_ID` and `VERCEL_APP_CLIENT_SECRET` from the previous step.
+| Variable | Description |
+|---|---|
+| `NEXT_PUBLIC_VERCEL_APP_CLIENT_ID` | The Client ID from your OAuth app settings |
+| `VERCEL_APP_CLIENT_SECRET` | The Client Secret you generated |
 
-### 3. Run
+When deploying to Vercel, add these same variables in your project's **Settings > Environment Variables** page. See [Environment Variables](https://vercel.com/docs/environment-variables) for more details.
+
+### 3. Run locally
 
 ```bash
 pnpm install
@@ -35,6 +68,29 @@ pnpm dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
-## Deploying
+## Deploying to Vercel
 
-When deploying to Vercel, update the Authorization Callback URL in your app settings to `https://your-domain.vercel.app/api/auth/callback` and add the environment variables to your project.
+1. Import the repository on [vercel.com/new](https://vercel.com/new)
+2. Add `NEXT_PUBLIC_VERCEL_APP_CLIENT_ID` and `VERCEL_APP_CLIENT_SECRET` as environment variables
+3. Deploy
+4. Update your OAuth app's **Authorization Callback URL** to `https://your-domain.vercel.app/api/auth/callback`
+
+## URL parameter prefilling
+
+The dashboard supports URL parameters for prefilling the route form. This is useful for platforms that want to link users directly to a preconfigured route:
+
+```
+https://your-app.vercel.app/dashboard?name=Docs+Proxy&src=/docs/:path*&dest=https://docs.example.com/:path*
+```
+
+| Parameter | Description |
+|---|---|
+| `name` | Prefill the rule name |
+| `src` | Prefill the source path |
+| `dest` | Prefill the destination URL |
+
+## Learn more
+
+- [Sign in with Vercel](https://vercel.com/docs/sign-in-with-vercel) — OAuth documentation
+- [Vercel SDK](https://vercel.com/docs/rest-api/sdk/project-routes/add-a-routing-rule) — SDK reference for project routes
+- [Project-level routing rules](https://vercel.com/docs/routing/project-routing-rules) — Routing rules documentation
