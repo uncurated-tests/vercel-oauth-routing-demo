@@ -49,7 +49,7 @@ export default async function Home() {
             >
               <path d="M37.5274 0L75.0548 65H0L37.5274 0Z" />
             </svg>
-            Try the demo
+            Sign in with Vercel
           </a>
         </div>
 
