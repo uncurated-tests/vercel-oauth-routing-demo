@@ -255,6 +255,12 @@ export function DashboardContent() {
             >
               Create Another
             </button>
+            <button
+              onClick={handleSignOut}
+              className="text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors mt-2"
+            >
+              Sign out
+            </button>
           </div>
         </div>
       </main>
