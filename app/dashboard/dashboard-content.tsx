@@ -38,9 +38,9 @@ export function DashboardContent() {
   const [selectedProject, setSelectedProject] = useState<Project | null>(null)
 
   // Form
-  const [name, setName] = useState(searchParams.get('name') || 'Docs Proxy')
+  const [name, setName] = useState(searchParams.get('name') || 'Demo Proxy')
   const [sourcePath, setSourcePath] = useState(
-    searchParams.get('src') || '/docs/:path*',
+    searchParams.get('src') || '/demo/:path*',
   )
   const [destination, setDestination] = useState(
     searchParams.get('dest') || 'https://example.com',
@@ -247,8 +247,8 @@ export function DashboardContent() {
                 setStep('select-team')
                 setSelectedTeam(null)
                 setSelectedProject(null)
-                setName(searchParams.get('name') || 'Docs Proxy')
-                setSourcePath(searchParams.get('src') || '/docs/:path*')
+                setName(searchParams.get('name') || 'Demo Proxy')
+                setSourcePath(searchParams.get('src') || '/demo/:path*')
                 setDestination(searchParams.get('dest') || 'https://example.com')
               }}
               className="inline-flex items-center justify-center border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 px-5 py-2.5 rounded-lg font-medium hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors text-sm"

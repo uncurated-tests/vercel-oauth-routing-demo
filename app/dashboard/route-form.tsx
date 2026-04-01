@@ -31,7 +31,7 @@ export function RouteForm({
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="Docs Proxy"
+          placeholder="Demo Proxy"
           required
           className="w-full rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 dark:focus:ring-white"
         />
@@ -43,7 +43,7 @@ export function RouteForm({
           type="text"
           value={sourcePath}
           onChange={(e) => setSourcePath(e.target.value)}
-          placeholder="/docs/:path*"
+          placeholder="/demo/:path*"
           required
           className="w-full rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 px-3 py-2.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-gray-900 dark:focus:ring-white"
         />
@@ -69,7 +69,7 @@ export function RouteForm({
           type="text"
           value={destination}
           onChange={(e) => setDestination(e.target.value)}
-          placeholder="https://your-backend.example.com/docs/:path*"
+          placeholder="https://your-backend.example.com/demo/:path*"
           required
           className="w-full rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 px-3 py-2.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-gray-900 dark:focus:ring-white"
         />
