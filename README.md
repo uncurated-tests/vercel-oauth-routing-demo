@@ -74,20 +74,7 @@ Open [http://localhost:3000](http://localhost:3000).
 2. Add `NEXT_PUBLIC_VERCEL_APP_CLIENT_ID` and `VERCEL_APP_CLIENT_SECRET` as environment variables
 3. Deploy
 4. Update your OAuth app's **Authorization Callback URL** to `https://your-domain.vercel.app/api/auth/callback`
-
-## URL parameter prefilling
-
-The dashboard supports URL parameters for prefilling the route form. This is useful for platforms that want to link users directly to a preconfigured route:
-
-```
-https://your-app.vercel.app/dashboard?name=Docs+Proxy&src=/docs/:path*&dest=https://docs.example.com/:path*
-```
-
-| Parameter | Description |
-|---|---|
-| `name` | Prefill the rule name |
-| `src` | Prefill the source path |
-| `dest` | Prefill the destination URL |
+5. 
 
 ## Learn more
 
