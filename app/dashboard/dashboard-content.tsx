@@ -40,7 +40,7 @@ export function DashboardContent() {
   // Form
   const [name, setName] = useState(searchParams.get('name') || 'Demo Proxy')
   const [sourcePath, setSourcePath] = useState(
-    searchParams.get('src') || '/demo/:path*',
+    searchParams.get('src') || '/demo',
   )
   const [destination, setDestination] = useState(
     searchParams.get('dest') || 'https://example.com',
@@ -248,7 +248,7 @@ export function DashboardContent() {
                 setSelectedTeam(null)
                 setSelectedProject(null)
                 setName(searchParams.get('name') || 'Demo Proxy')
-                setSourcePath(searchParams.get('src') || '/demo/:path*')
+                setSourcePath(searchParams.get('src') || '/demo')
                 setDestination(searchParams.get('dest') || 'https://example.com')
               }}
               className="inline-flex items-center justify-center border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 px-5 py-2.5 rounded-lg font-medium hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors text-sm"

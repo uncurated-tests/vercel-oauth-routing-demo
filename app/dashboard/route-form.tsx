@@ -43,22 +43,10 @@ export function RouteForm({
           type="text"
           value={sourcePath}
           onChange={(e) => setSourcePath(e.target.value)}
-          placeholder="/demo/:path*"
+          placeholder="/demo"
           required
           className="w-full rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 px-3 py-2.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-gray-900 dark:focus:ring-white"
         />
-        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5">
-          Uses{' '}
-          <a
-            href="https://vercel.com/docs/routing/project-routing-rules"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="underline underline-offset-2"
-          >
-            path-to-regexp
-          </a>{' '}
-          syntax
-        </p>
       </div>
 
       <div>
@@ -69,7 +57,7 @@ export function RouteForm({
           type="text"
           value={destination}
           onChange={(e) => setDestination(e.target.value)}
-          placeholder="https://your-backend.example.com/demo/:path*"
+          placeholder="https://your-backend.example.com/demo"
           required
           className="w-full rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 px-3 py-2.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-gray-900 dark:focus:ring-white"
         />
