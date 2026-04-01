@@ -4,7 +4,7 @@ A demo app showing how to use [Sign in with Vercel](https://vercel.com/docs/sign
 
 ## How it works
 
-1. User clicks "Sign in with Vercel" and authenticates via OAuth (PKCE flow)
+1. User clicks "Sign in with Vercel" and authenticates via OAuth
 2. The app receives an access token scoped to the user's account
 3. User selects a team and project, then configures a rewrite rule (source path + destination URL)
 4. The app creates the routing rule via the [Vercel SDK](https://vercel.com/docs/rest-api/sdk/project-routes/add-a-routing-rule) and auto-publishes it to production
@@ -74,7 +74,6 @@ Open [http://localhost:3000](http://localhost:3000).
 2. Add `NEXT_PUBLIC_VERCEL_APP_CLIENT_ID` and `VERCEL_APP_CLIENT_SECRET` as environment variables
 3. Deploy
 4. Update your OAuth app's **Authorization Callback URL** to `https://your-domain.vercel.app/api/auth/callback`
-5. 
 
 ## Learn more
 
